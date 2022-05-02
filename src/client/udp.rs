@@ -1,10 +1,7 @@
 use std::net::{SocketAddr, UdpSocket};
-use std::str::FromStr;
 use std::time::Duration;
 
-
-pub fn ping(addr: &str, size: usize, timeout: u64) {
-    let addr = SocketAddr::from_str(addr).expect("Invalid address!");
+pub fn ping(addr: SocketAddr, size: usize, timeout: u64) {
     let mut port = 20000;
     let socket = loop {
         if let Ok(socket) = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], port))) {
@@ -13,8 +10,12 @@ pub fn ping(addr: &str, size: usize, timeout: u64) {
         port += 1;
     };
 
-    socket.set_write_timeout(Some(Duration::from_secs(timeout))).expect("set write timeout failed!");
-    socket.set_read_timeout(Some(Duration::from_secs(timeout))).expect("set read timeout failed!");
+    socket
+        .set_write_timeout(Some(Duration::from_secs(timeout)))
+        .expect("set write timeout failed!");
+    socket
+        .set_read_timeout(Some(Duration::from_secs(timeout)))
+        .expect("set read timeout failed!");
 
     let mut buf = vec![0; size];
 

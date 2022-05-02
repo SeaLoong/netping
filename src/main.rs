@@ -1,4 +1,3 @@
-
 pub mod client {
     pub mod tcp;
     pub mod udp;
@@ -9,7 +8,11 @@ pub mod server {
     pub mod udp;
 }
 
+pub mod dns_resolver;
+
 use clap::Parser;
+use std::net::SocketAddr;
+use std::str::FromStr;
 
 /// Simple network test program. TCP/UDP ping, TCP/UDP server.
 #[derive(Parser, Debug)]
@@ -36,20 +39,27 @@ struct Args {
     timeout: u64,
 }
 
-
 fn main() {
     let args = Args::parse();
+
+    let address: &str = &args.address;
+    let mut split = address.split(':');
+    let host = split.next().expect("Invalid address!");
+    let port = split.next().expect("Invalid address!");
+    let addr = SocketAddr::new(
+        dns_resolver::lookup(host),
+        u16::from_str(port).expect("Invalid port!"),
+    );
+
     if args.server {
         if args.udp {
-            server::udp::start(&args.address, args.size, args.timeout);
+            server::udp::start(addr, args.size, args.timeout);
         } else {
-            server::tcp::start(&args.address, args.size, args.timeout);
+            server::tcp::start(addr, args.size, args.timeout);
         }
+    } else if args.udp {
+        client::udp::ping(addr, args.size, args.timeout);
     } else {
-        if args.udp {
-            client::udp::ping(&args.address, args.size, args.timeout);
-        } else {
-            client::tcp::ping(&args.address, args.size, args.timeout);
-        }
+        client::tcp::ping(addr, args.size, args.timeout);
     }
 }
